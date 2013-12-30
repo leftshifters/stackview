@@ -23,6 +23,8 @@ public class MainActivity extends Activity implements OnClickListener{
 	private int screenHeight;
 	private String[] colorCode = {"#d71921", "#00bff3", "#7cc576", "#ff9000", "#8d5da3", "#f24957"};
 	private Random random;
+	private boolean ticketOpen = false;
+	private ArrayList<Integer> originalYPositions = new ArrayList<Integer>();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -34,25 +36,60 @@ public class MainActivity extends Activity implements OnClickListener{
 		
 		FrameLayout holder = (FrameLayout) findViewById(R.id.holder);
 		
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 180; i++) {
 			Button button = getCard(i);
 			buttons.add(button);
 			holder.addView(button);
 		}
+		
+		holder.postDelayed(new Runnable() {
+			public void run() {
+				for (Button button : buttons) {
+					originalYPositions.add(button.getTop());
+				}
+			}
+		}, 1000);
 	}
 
 	@SuppressLint("NewApi")
 	@Override
 	public void onClick(View v) {
 		Log.i("tag", "screen height " + screenHeight);
-		for (Button button : buttons) {
-			if (button.getId() != v.getId()) {
-				Log.i("tag", "view top " + button.getTop());
+		if (!ticketOpen) {
+			int i = 0;
+			originalYPositions.clear();
+			for (Button button : buttons) {
+				int heightToMove = 0;
+				if (button.getId() != v.getId()) {
+					heightToMove = (screenHeight  - button.getTop() + (i * 40));
+					Log.i("tag", "view top " + button.getTop());
+					ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(button,
+							"translationY", heightToMove);
+					i++;
+					objectAnimator.setDuration(200);
+					objectAnimator.start();
+				} else {
+					heightToMove = (0 - button.getTop());
+					ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(v,
+							"translationY", heightToMove);
+					objectAnimator.setDuration(200);
+					objectAnimator.start();
+				}
+				originalYPositions.add(heightToMove * -1);
+			}
+			ticketOpen = true;
+		} else {
+			int i = 0;
+			for (Button button : buttons) {
+				Log.i("bugga", "difference " + originalYPositions.get(i));
 				ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(button,
-						"translationY", (screenHeight  - button.getTop()));
+						"translationY", originalYPositions.get(i));
 				objectAnimator.setDuration(200);
 				objectAnimator.start();
+				i++;
+				Log.i("bugga", "in for loop " + i);
 			}
+			ticketOpen = false;
 		}
 	}
 	
